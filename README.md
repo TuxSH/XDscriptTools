@@ -1,3 +1,4 @@
 # XDscriptTools
-XD script tools (disassembler, etc...)
+XD script tools (disassembler, etc...).
+
 Requires Python 3
