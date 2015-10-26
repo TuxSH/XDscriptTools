@@ -20,7 +20,7 @@ class ScriptVar(object):
 	"""Script variable:
 	struct XDscriptVar {
 		s16 type; // 0x00 -- 0x01, s16
-		// 0x02--0x03: padding
+		0x02--0x03: unknown (unsused by the interpreter)
 		union{
 			s32 asInt;
 			float asFloat;

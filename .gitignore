@@ -59,3 +59,6 @@ target/
 # Visual Studio
 *.pyproj
 *.sln
+
+# Custom
+1_M3_houseD_1F.txt

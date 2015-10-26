@@ -55,7 +55,8 @@ class ScriptCtx(object):
 		for i in range(sec.nbElems):
 			code_off = struct.unpack_from(">I", sec.data, 8*i)[0]
 			nm_off = struct.unpack_from(">I", sec.data, 4 + 8*i)[0] - 0x20
-			if 0 > nm_off or nm_off + 0x20 >= len(sec.data): continue 
+			if 0 > nm_off or nm_off >= len(sec.data): 
+				continue 
 			nm = sec.data[nm_off:sec.data.find(b'\x00', nm_off)].decode('sjis')
 			sec.functionTable.append((code_off, nm))
 
@@ -114,6 +115,9 @@ class ScriptCtx(object):
 	def load(self, src):
 		if src[:4] != b'TCOD': warnings.warn("Apparently not a XD script file!")
 		self.totalSize = struct.unpack_from(">I", src, 4)[0]
+		if self.totalSize != len(src):
+			warnings.warn("len(src) is different from the script stored total size")
+
 		self.loadSections(src)
 		self.parseFTBLSection()
 		self.parseHEADSection()
@@ -126,11 +130,18 @@ class ScriptCtx(object):
 
 		ftbl = self.sections.get("FTBL")
 		code = self.sections["CODE"]
+		head = self.sections["HEAD"]
+
+
 		if ftbl is not None:
+			if not ftbl.nbElems == head.nbElems == code.nbElems:
+				warnings.warn("Inconsistent number of functions between FTBL, HEAD, and CODE")
 			for (off, nm) in ftbl.functionTable:
 				code.labels[off] = nm
+		elif head.nbElems != code.nbElems:
+			warnings.warn("Inconsistent number of functions between HEAD, and CODE")
 
-		entryPoint = self.sections["HEAD"].valueOffset
+		entryPoint = head.valueOffset
 		if not code.labels[entryPoint]: code.labels[entryPoint] = "__start" 
 		
 	def __init__(self, src): self.load(src)
@@ -156,7 +167,9 @@ class ScriptCtx(object):
 
 		out.write('.section "HEAD":\n')
 		out.write('\t.set __ENTRY_POINT__, {0}\n'.format(code.labels[head.valueOffset]))
-		for off in head.functionOffsets: out.write('\t.function {0}\n'.format(code.labels[off]))
+		for off in head.functionOffsets:
+			if not code.labels[off]: code.labels[off] = 'sub_{0}'.format(hex(off))
+			out.write('\t.function {0}\n'.format(code.labels[off]))
 		out.write('\n')
 
 		out.write('.section "CODE":\n')
@@ -166,11 +179,11 @@ class ScriptCtx(object):
 			separator_printed = False
 			if (ftbl is not None and code.labels[instr.position] in [nm for (off, nm) in ftbl.functionTable])\
 			or code.labels[instr.position][:4] == 'sub_':
-				 out.write('\n\n;=================SUBROUTINE===================\n')
+				 out.write('\n\n;=============================SUBROUTINE==============================\n')
 				 separator_printed = True
 
 			elif code.labels[instr.position][:4] == 'loc_':
-				out.write(';----------------------------------------------\n')
+				out.write(';---------------------------------------------------------------------\n')
 				separator_printed = True
 
 			if code.labels[instr.position]:
@@ -186,7 +199,7 @@ class ScriptCtx(object):
 
 		if strg is not None:
 			out.write('.section "STRG":\n')
-			splt = strg.stringContents.split('\x00')
+			splt = strg.stringContents.rstrip('\x00').split('\x00')
 			if splt != ['']:
 				for s in splt:
 					out.write('\t"{0}",\n'.format(s))

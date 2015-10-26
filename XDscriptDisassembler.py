@@ -2,14 +2,22 @@
 
 from XDscriptLib import *
 import argparse
+import sys
+import os
+
 
 if __name__ == '__main__':
+	if sys.version_info[0] < 3:
+		raise RuntimeError("Python 3 required")
+
 	parser = argparse.ArgumentParser()
 	parser.add_argument("files", help="XD script files to disassemble", nargs='+', type=str)
 	args = parser.parse_args()
+	fnames = args.files
 
-	for fname in args.files:
+	for fname in fnames:
 		with open(fname, "rb") as f:
-			out_fname = fname.split('.')[0]+".txt"
+			out_fname = os.path.splitext(fname)[0]+'.txt'
+			contents = f.read()
 			with open(out_fname, "w") as out_f:
-				out_f.write(str(ScriptCtx(f.read())))
+				out_f.write(str(ScriptCtx(contents)))
