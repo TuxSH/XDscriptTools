@@ -12,6 +12,7 @@ if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser()
 	parser.add_argument("files", help="XD script files to disassemble", nargs='+', type=str)
+	parser.add_argument("--display-code-offsets", help="Display code offsets", action="store_true") 
 	args = parser.parse_args()
 	fnames = args.files
 
@@ -20,4 +21,4 @@ if __name__ == '__main__':
 			out_fname = os.path.splitext(fname)[0]+'.txt'
 			contents = f.read()
 			with open(out_fname, "w") as out_f:
-				out_f.write(str(ScriptCtx(contents)))
+				out_f.write(str(ScriptCtx(contents, args.display_code_offsets)))

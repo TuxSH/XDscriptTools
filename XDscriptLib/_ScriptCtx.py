@@ -144,7 +144,9 @@ class ScriptCtx(object):
 		entryPoint = head.valueOffset
 		if not code.labels[entryPoint]: code.labels[entryPoint] = "__start" 
 		
-	def __init__(self, src): self.load(src)
+	def __init__(self, src, displayOffsets = False):
+		self.load(src)
+		self.displayOffsets = displayOffsets
 	
 	def __str__(self):
 		out = io.StringIO()
@@ -191,6 +193,9 @@ class ScriptCtx(object):
 
 			if instr.opcode == 16 and not separator_printed:
 				out.write('\n')
+
+			if(self.displayOffsets):
+				out.write('{0}:'.format(hex(instr.position)))
 
 			out.write('\t{0}\n'.format(str(instr)))
 
